@@ -26,7 +26,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     let running:boolean = false;
     
     let m = await this.omegga.getMinigames();
-    if (m[1] == undefined) 
+    if (m.length < 2) 
     {
       console.warn("No minigame was found, start minigame then restart plugin or try /lava start");
       return;
@@ -177,7 +177,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     {
       let p_s = [];
       let ming = await this.omegga.getMinigames();
-      if (ming[1] != undefined) 
+      if (ming.length > 1) 
       {
         let mingplr = ming[1].members;
         minigamePlayers = ming[1].members.length;
@@ -199,7 +199,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     const GetEndCondition = async () => // writes to aliveNumber
     {
       let ming = await this.omegga.getMinigames();
-      if (ming[1] != undefined) 
+      if (ming.length > 1) 
       {
         let mingplr = ming[1].members;
         (mingplr.length < 2) ? aliveNumber = 0 : aliveNumber = 1;
