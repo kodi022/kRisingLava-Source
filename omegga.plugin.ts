@@ -28,7 +28,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     let m = await this.omegga.getMinigames();
     if (m[1] == undefined) 
     {
-      console.warn("No minigame was found, run /lava start with auth to start");
+      console.warn("No minigame was found, start minigame then restart plugin or try /lava start");
       return;
     }
 
@@ -53,6 +53,9 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
             this.omegga.whisper(name, 'write <code>/lava start</> or <code>/lava stop</> or <code>/lava reset</>');
             break;
         }
+      } else 
+      {
+        this.omegga.whisper(name, 'You are not authorized');
       }
     })
     this.omegga.on('cmd:lavasetwins', async (name, value, value2:number) => 
