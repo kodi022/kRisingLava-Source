@@ -1,0 +1,84 @@
+{
+  "name": "kRisingLava",
+  "description": "Rising lava gamemode! This plugin only watches the first minigame on a server.",
+  "author": "Kodi022",
+  "config": 
+  {
+    "Wait-Between-Rounds": 
+    {
+        "description": "Seconds to wait after round end",
+        "type": "number",
+        "default": 6
+    },
+    "Water-Speed-Scale": 
+    {
+        "description": "Rate at which rater rises",
+        "type": "number",
+        "default": 0.8
+    },
+    "Water-Start-Height": 
+    {
+        "description": "Enable if you use Minigame's last man standing option",
+        "type": "number",
+        "default": 20
+    },
+    "Count-Wins-Min-Players": 
+    {
+        "description": "Minimum players to start counting wins",
+        "type": "number",
+        "default": 4
+    },
+    "Minigame-Last-Man-Standing": 
+    {
+        "description": "Enable if you use Minigame's last man standing option",
+        "type": "boolean",
+        "default": false
+    },      
+    "Authorized-Users": 
+    {
+        "description": "For use of restricted commands (some commands require debug and auth)",
+        "type": "players",
+        "default": []
+    },
+    "Enable-Debug": 
+    {
+        "description": "Enables some debug console logs",
+        "type": "boolean",
+        "default": false
+    }
+  },
+  "commands": 
+  [
+      {
+        "name": "/lava",
+        "description": "Takes an option after command to control minigame. Probably won't need, may not work.",
+        "exmaple": "/lava start",
+        "args": 
+        [
+            {
+                "name": "option",
+                "description": "control word for minigame, leave empty for list",
+                "required": true
+            }
+        ]
+      },
+      {
+        "name": "/lavasetwins",
+        "description": "Sets the wins of a given person. Requires auth, may not work",
+        "exmaple": "/lava start",
+        "args": 
+        [
+            {
+                "name": "name",
+                "description": "Name of person to set, uses fuzzy search.",
+                "required": true
+            },
+            {
+                "name": "number",
+                "description": "the number",
+                "required": true
+            }
+        ]
+      }
+    ]
+}
