@@ -17,30 +17,23 @@ Commands should NOT BE NECESSARY for the gamemode to function but there are two,
 
 /lava (option)
    
-     (start) : starts the rising lava gamemode, requires a minigame
+(start) : starts the rising lava gamemode, requires a minigame
    
-     (stop) : pauses the rising lava gamemode
+(stop) : pauses the rising lava gamemode
    
-     (reset) : resets the environment to gamemode's defaults
+(reset) : resets the environment to gamemode's defaults
 
 /lavasetwins (name) (number)
      will set a given players wins to a given number (probably doesnt work)
 
 ## Environment customization
-This plugin automates these environment variables:
-  Water Height
-  Sky Color
-  Fog Color
-  Sunlight Color
-  Time of Day
-  Sun Angle
+This plugin automates Water Height, Sky Color, Fog Color, Sunlight Color, Time of Day and Sun Angle
 
 Any other variable is free to edit.
 ## Possible bugs/issues
-     - can semi-rarely run into random errors that shut plugin  off
      - Commands may not actually help
      - Could bug with multiple minigames
-     - If cpu is too slow it could miss minigame data updates
+     - If cpu is too slow it could miss minigame data updates (just theory)
      - The water can definitely get too fast 2+ minutes in, but you shouldnt usually be alive at that point anyway
 
 
