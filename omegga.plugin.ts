@@ -25,13 +25,6 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     const debug = this.config["Enable-Debug"];
     let running:boolean = false;
     
-    let m = await this.omegga.getMinigames();
-    if (m.length < 2) 
-    {
-      console.warn("No minigame was found, start minigame then restart plugin or try /lava start");
-      return;
-    }
-
     this.omegga.on('cmd:lava', async (name, value) => 
     {
       if (auth.find(p => p.name == name)) 
@@ -75,6 +68,14 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
         }
       }
     })
+
+    let m = await this.omegga.getMinigames();
+    if (m.length < 2) 
+    {
+      console.warn("No minigame was found, start minigame then restart plugin or try /lava start");
+      this.omegga.broadcast("No minigame was found, start minigame then restart plugin or try /lava start");
+      return { registeredCommands: ['lava', 'lavasetwins'] };
+    }
 
     // ran at start of each round, then loops RisingLoop() until end conditions are met, and returns here
     const Begin = async () =>
@@ -154,7 +155,13 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
             }
           } else 
           {
-            this.omegga.broadcast(`<size="15">At least ${countWinsNum} players required to count wins</>`);
+            this.omegga.broadcast(`<size="12">At least ${countWinsNum} players required to count wins</>`);
+          }
+        } else 
+        {
+          if (minigamePlayers < countWinsNum) 
+          {
+            this.omegga.broadcast(`<size="12">At least ${countWinsNum} players required to count wins</>`);
           }
         }
 
@@ -165,7 +172,6 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
           await Begin();
           return;
         }, roundEndWait);
-        return;
       }
       tick++;
       if (running) setTimeout(async () => {await RisingLoop();}, 100);
