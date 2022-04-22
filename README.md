@@ -6,7 +6,7 @@ The Rising Lava gamemode, with environment automation and persistent win scores.
 ## Install
 `omegga install gh:Kodi022/kRisingLava`
 
-Create a minigame
+Create ONE minigame
 
 Start plugin
      If the plugin starts with no minigame running and the plugin didnt die, you can do 

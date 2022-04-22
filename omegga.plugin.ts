@@ -80,8 +80,8 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     // ran at start of each round, then loops RisingLoop() until end conditions are met, and returns here
     const Begin = async () =>
     {
-      let minigame = await this.omegga.getMinigames();
-      if (minigame.length > 1) 
+      let minigame = (await this.omegga.getMinigames()).filter(m => m.name !== 'GLOBAL');
+      if (minigame.length == 1) 
       {
         running = true;
         tick = 0;
@@ -182,11 +182,11 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     const GetAlivePlayers = async ()  => //writes into alivePlayers
     {
       let p_s = [];
-      let ming = await this.omegga.getMinigames();
-      if (ming.length > 1) 
+      let ming = (await this.omegga.getMinigames()).filter(m => m.name !== 'GLOBAL');
+      if (ming.length == 1) 
       {
-        let mingplr = ming[1].members;
-        minigamePlayers = ming[1].members.length;
+        let mingplr = ming[0].members;
+        minigamePlayers = ming[0].members.length;
         let fullplrList:IPlayerPositions = await this.omegga.getAllPlayerPositions();
         for (let p of fullplrList) 
         {
@@ -204,10 +204,10 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     // gets amount of players in minigame, if only one then disable one left win condition
     const GetEndCondition = async () => // writes to aliveNumber
     {
-      let ming = await this.omegga.getMinigames();
-      if (ming.length > 1) 
+      let ming = (await this.omegga.getMinigames()).filter(m => m.name !== 'GLOBAL');
+      if (ming.length == 1) 
       {
-        let mingplr = ming[1].members;
+        let mingplr = ming[0].members;
         (mingplr.length < 2) ? aliveNumber = 0 : aliveNumber = 1;
       } else 
       {
