@@ -22,6 +22,12 @@
         "type": "number",
         "default": 20
     },
+    "Exponential-Water": 
+    {
+        "description": "Should water speed up the higher it is",
+        "type": "boolean",
+        "default": true
+    },
     "Count-Wins-Min-Players": 
     {
         "description": "Minimum players to start counting wins",
