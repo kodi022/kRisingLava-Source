@@ -1,4 +1,4 @@
-import OmeggaPlugin, { OL, PS, PC, IPlayerPositions, OmeggaPlayer } from 'omegga';
+import OmeggaPlugin, { OL, PS, PC, IPlayerPositions, OmeggaPlayer, BrickInteraction } from 'omegga';
 type Config = { foo: string };
 type Storage = { bar: string };
 
@@ -7,12 +7,10 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
   omegga: OL;
   config: PC<Config>;
   store: PS<Storage>;
-  constructor(omegga: OL, config: PC<Config>, store: PS<Storage>) 
-  {
+  constructor(omegga: OL, config: PC<Config>, store: PS<Storage>) {
     this.omegga = omegga;
     this.config = config;
-    this.store = store;
-  }
+    this.store = store; }
 
   async init() 
   {
@@ -85,6 +83,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
       if (ming.length == 1) 
       {
         if (debug) console.info('Beginning');
+        running = true;
         tick = 0;
         time = (Math.random() * 11) + 6.5;
         angle = Math.random() * 360
@@ -105,12 +104,11 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     let aliveNumber:number = 1; // how many players may be alive at end of round
     let angle:number = 0; // random sun angle each round
     let time:number = 0; // random hour between 6.5 and 17.5 each round
-    let flagButton = 0; // unused, will allow someone who reaches end of map to end round with button and get a special win
     const RisingLoop = async () => 
     {
       let waterLevel:number = 0;
-      if (exponential) waterLevel = ((((tick ** 1.4) * 0.1) + waterStartHeight) + (tick * 0.7)) * waterSpeedScale;
-      else waterLevel = ((tick * 1.5) + waterStartHeight) * waterSpeedScale;
+      if (exponential) waterLevel = ((((tick ** 1.42) * 0.1) + waterStartHeight) + (tick * 0.5)) * waterSpeedScale;
+      else waterLevel = ((tick * 2) + waterStartHeight) * waterSpeedScale;
 
       let colorChange:number = Math.min((tick / 1500) + 0.01, 1);
       let colorChangeInverted:number = 1 - colorChange;
@@ -139,45 +137,72 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
                 sunAngle:angle}}}});
         }
       } else 
-      {
-        if (!lastManStand && alivePlayers.length == 1 && aliveNumber == 1) 
-        {
-          if (minigamePlayers >= countWinsNum) 
-          {
-            let plrStore = await this.store.get(alivePlayers[0].name);
-            if (plrStore == null) 
-            {
-              this.store.set(alivePlayers[0].name, {wins:1, flagWins:0});
-              this.omegga.broadcast(`<size="28">${alivePlayers[0].name} is the last alive! This is their first win!</>`);
-            } else 
-            {
-              plrStore.wins += 1;
-              this.omegga.broadcast(`<size="28">${alivePlayers[0].name} is the last alive! ${plrStore.wins} wins</>`);
-              this.store.set(alivePlayers[0].name, plrStore);
-            } 
-          } else 
-          {
-            this.omegga.broadcast(`<size="12">At least ${countWinsNum} players required to count wins</>`);
-          }
-        } else 
-        {
-          if (minigamePlayers < countWinsNum) 
-          {
-            this.omegga.broadcast(`<size="12">At least ${countWinsNum} players required to count wins</>`);
-          }
-        }
-        if (alivePlayers.length == 1) this.omegga.nextRoundMinigame(0);
-        running = false;
-        tick = 0;
-        LoadStartEnv();
-        setTimeout(async () => 
-        {
-          running = true;
-          await Begin();
-        }, roundEndWait);
+      { 
+        await EndCheck(); 
+        return;
       }
+
       tick++;
       if (running) setTimeout(async () => {await RisingLoop();}, 100);
+    }
+
+    this.omegga.on('interact', async (interact:BrickInteraction) => 
+    {
+      if (running) 
+      {
+        await EndCheck(interact.player.name);
+      }
+    })
+
+    const EndCheck = async (player?:string) => 
+    {
+      running = false;
+
+      if (minigamePlayers >= countWinsNum && player) 
+      {
+        let plrStore = await this.store.get<any>(player);
+        if (plrStore == null) 
+        {
+          this.store.set<any>(player, {wins:1, flagWins:0});
+          this.omegga.broadcast(`<size="28">${player} has hit the finish button! This is their first win!</>`);
+        } else 
+        {
+          plrStore.wins += 1;
+          plrStore.flagWins += 1;
+          this.omegga.broadcast(`<size="28">${player} has hit the finish button! ${plrStore.wins} wins, ${plrStore.flagWins} End wins </>`);
+          this.store.set<any>(player, plrStore);
+        }   
+      } else if (!lastManStand && alivePlayers.length == 1 && aliveNumber == 1)
+      {
+        if (minigamePlayers >= countWinsNum) 
+        {
+          let plrStore = await this.store.get(alivePlayers[0].name);
+          if (plrStore == null) 
+          {
+            this.store.set(alivePlayers[0].name, {wins:1, flagWins:0});
+            this.omegga.broadcast(`<size="28">${alivePlayers[0].name} is the last alive! This is their first win!</>`);
+          } else 
+          {
+            plrStore.wins += 1;
+            this.omegga.broadcast(`<size="28">${alivePlayers[0].name} is the last alive! ${plrStore.wins} wins</>`);
+            this.store.set(alivePlayers[0].name, plrStore);
+          } 
+        } else 
+        {
+          this.omegga.broadcast(`<size="12">At least ${countWinsNum} players required to count wins</>`);
+        }
+      } else 
+      {
+        if (minigamePlayers < countWinsNum) 
+        {
+          this.omegga.broadcast(`<size="12">At least ${countWinsNum} players required to count wins</>`);
+        } 
+      }
+
+      if (alivePlayers.length == 1) this.omegga.nextRoundMinigame(0);
+      tick = 0;
+      LoadStartEnv();
+      setTimeout(async () => { await Begin(); }, roundEndWait);
     }
 
 
