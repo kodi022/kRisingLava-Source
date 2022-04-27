@@ -146,12 +146,14 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
       if (running) setTimeout(async () => {await RisingLoop();}, 100);
     }
 
+    this.omegga.on('join', async () => 
+    { 
+      //if (!running) await Begin();
+      running = true;
+    });
     this.omegga.on('interact', async (interact:BrickInteraction) => 
     {
-      if (running) 
-      {
-        await EndCheck(interact.player.name);
-      }
+      if (running) await EndCheck(interact.player.name);
     })
 
     const EndCheck = async (player?:string) => 
