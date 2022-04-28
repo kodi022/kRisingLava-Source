@@ -104,47 +104,52 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     let aliveNumber:number = 1; // how many players may be alive at end of round
     let angle:number = 0; // random sun angle each round
     let time:number = 0; // random hour between 6.5 and 17.5 each round
+    
     const RisingLoop = async () => 
     {
-      let waterLevel:number = 0;
-      if (exponential) waterLevel = ((((tick ** 1.42) * 0.1) + waterStartHeight) + (tick * 0.5)) * waterSpeedScale;
-      else waterLevel = ((tick * 2) + waterStartHeight) * waterSpeedScale;
-
-      let colorChange:number = Math.min((tick / 1500) + 0.01, 1);
-      let colorChangeInverted:number = 1 - colorChange;
-
-      if (tick % 15 == 0 || tick == 3) await GetAlivePlayers();
-
-      if (alivePlayers.length > aliveNumber)
+      let interval = setInterval(async () => 
       {
-        if (debug) 
+        let waterLevel:number = 0;
+        if (exponential) waterLevel = ((((tick ** 1.42) * 0.1) + waterStartHeight) + (tick * 0.5)) * waterSpeedScale;
+        else waterLevel = ((tick * 2) + waterStartHeight) * waterSpeedScale;
+  
+        let colorChange:number = Math.min((tick / 1500) + 0.01, 1);
+        let colorChangeInverted:number = 1 - colorChange;
+  
+        if (tick % 15 == 0 || tick == 3) await GetAlivePlayers();
+  
+        if (alivePlayers.length > aliveNumber)
         {
-          let string = "";
-          (tick % 15 == 0) ? string = ", getting minigames" : string = "";
-          console.info(`alive: ${alivePlayers.length}, tick: ${tick}` + string);
+          if (debug) 
+          {
+            let string = "";
+            (tick % 15 == 0) ? string = ", getting minigames" : string = "";
+            console.info(`alive: ${alivePlayers.length}, tick: ${tick}` + string);
+          }
+          if (tick % 2 == 0) 
+          {
+            this.omegga.loadEnvironmentData({data:{groups:{Water:{waterHeight:waterLevel}}}});
+          }
+          if (tick % 5 == 0)
+          {
+            this.omegga.loadEnvironmentData({data:{groups:{
+                  Sky:{skyColor:{r:1,g:colorChangeInverted,b:colorChangeInverted,a:1},
+                  fogColor:{r:0.5,g:colorChangeInverted * 0.6,b:colorChangeInverted * 0.6,a:1},
+                  sunlightColor:{r:0.65,g:colorChangeInverted * 0.6,b:colorChangeInverted * 0.6,a:1},
+                  timeOfDay:time,
+                  sunAngle:angle}}}});
+          }
+        } else 
+        { 
+          running = false;
+          await EndCheck(); 
+          clearInterval(interval);
         }
-        if (tick % 2 == 0) 
-        {
-          this.omegga.loadEnvironmentData({data:{groups:{Water:{waterHeight:waterLevel}}}});
-        }
-        if (tick % 5 == 0)
-        {
-          this.omegga.loadEnvironmentData({data:{groups:{
-                Sky:{skyColor:{r:1,g:colorChangeInverted,b:colorChangeInverted,a:1},
-                fogColor:{r:0.5,g:colorChangeInverted * 0.6,b:colorChangeInverted * 0.6,a:1},
-                sunlightColor:{r:0.65,g:colorChangeInverted * 0.6,b:colorChangeInverted * 0.6,a:1},
-                timeOfDay:time,
-                sunAngle:angle}}}});
-        }
-      } else 
-      { 
-        await EndCheck(); 
-        return;
-      }
-
-      tick++;
-      if (running) setTimeout(async () => {await RisingLoop();}, 100);
-    }
+  
+        tick++;    
+      }, 100);
+      //if (running) setTimeout(async () => {await RisingLoop();}, 100);
+    };
 
     this.omegga.on('join', async () => 
     { 
@@ -202,8 +207,8 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
       }
 
       if (alivePlayers.length == 1) this.omegga.nextRoundMinigame(0);
+      this.omegga.loadEnvironmentData({data:{groups:{Water:{waterHeight:waterStartHeight}}}});
       tick = 0;
-      LoadStartEnv();
       setTimeout(async () => { await Begin(); }, roundEndWait);
     }
 
