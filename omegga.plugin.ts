@@ -68,8 +68,8 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
       }
     })
 
-    let m = await this.omegga.getMinigames();
-    if (m.length < 2) 
+    let ming = await this.omegga.getMinigames();
+    if (ming.length < 2) 
     {
       console.warn("No minigame was found, start minigame then restart plugin or try /lava start");
       this.omegga.broadcast("No minigame was found, start minigame then restart plugin or try /lava start");
@@ -79,9 +79,10 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     // ran at start of each round, then loops RisingLoop() until end conditions are met, and returns here
     const Begin = async () =>
     {
-      let ming = (await this.omegga.getMinigames()).filter(m => m.name !== 'GLOBAL');
-      if (ming.length == 1) 
+      let ming = await this.omegga.getMinigames();
+      if (ming && ming.length > 1) // getMinigames() is very hit and miss, supposed to return mini and globalmini
       {
+        ming = ming.filter(m => m.name !== 'GLOBAL')
         if (debug) console.info('Beginning');
         running = true;
         tick = 0;
@@ -93,25 +94,36 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
         await RisingLoop();
       } else 
       {
-        this.omegga.broadcast('Rising Lava requires a running minigame!');
+        this.omegga.broadcast('No running minigame or getMinigame failed!');
+        console.warn('No running minigame or getMinigame failed!');
         return;
       }
     }
 
     let tick:number = 0;
+    let inactiveTick:number = 0;
     let minigamePlayers:number = 0;
     let alivePlayers = [];
     let aliveNumber:number = 1; // how many players may be alive at end of round
     let angle:number = 0; // random sun angle each round
     let time:number = 0; // random hour between 6.5 and 17.5 each round
+    let interval:number;
     
     const RisingLoop = async () => 
     {
-      let interval = setInterval(async () => 
+      interval = setInterval(async () => 
       {
-        let waterLevel:number = 0;
-        if (exponential) waterLevel = ((((tick ** 1.42) * 0.1) + waterStartHeight) + (tick * 0.5)) * waterSpeedScale;
-        else waterLevel = ((tick * 2) + waterStartHeight) * waterSpeedScale;
+        if (minigamePlayers == 0) 
+        {
+          inactiveTick++;
+          if (inactiveTick % 15) await GetAlivePlayers();
+          return;
+        }
+        let waterLevel:number = waterStartHeight;
+
+        (exponential) 
+        ? waterLevel = ((((tick ** 1.42) * 0.1) + waterStartHeight) + (tick * 0.5)) * waterSpeedScale
+        : waterLevel = ((tick * 2) + waterStartHeight) * waterSpeedScale
   
         let colorChange:number = Math.min((tick / 1500) + 0.01, 1);
         let colorChangeInverted:number = 1 - colorChange;
@@ -139,23 +151,15 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
                   timeOfDay:time,
                   sunAngle:angle}}}});
           }
-        } else 
-        { 
-          running = false;
-          await EndCheck(); 
-          clearInterval(interval);
-        }
-  
+        } else await EndCheck();
         tick++;    
       }, 100);
-      //if (running) setTimeout(async () => {await RisingLoop();}, 100);
     };
 
-    this.omegga.on('join', async () => 
-    { 
-      //if (!running) await Begin();
-      running = true;
-    });
+    // this.omegga.on('join', async () => // sanity function
+    // { 
+    //   running = true;
+    // });
     this.omegga.on('interact', async (interact:BrickInteraction) => 
     {
       if (running) await EndCheck(interact.player.name);
@@ -163,72 +167,78 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
 
     const EndCheck = async (player?:string) => 
     {
+      clearInterval(interval);
       running = false;
+      tick = 0;
+      if (alivePlayers.length > 0) this.omegga.nextRoundMinigame(0);
+      this.omegga.loadEnvironmentData({data:{groups:{Water:{waterHeight:waterStartHeight}}}});
+      setTimeout(async () => { await Begin(); }, roundEndWait);
+      
+      let lastplayername: string; 
+      try {lastplayername = alivePlayers[0].name || null} catch {}
 
-      if (minigamePlayers >= countWinsNum && player) 
+      let name: string = player || lastplayername  || null;  
+      let string1: string = "";
+      let string2: string = `<size="12">At least ${countWinsNum} players required to count wins</>`;
+
+      if (name != null && minigamePlayers >= countWinsNum) 
       {
-        let plrStore = await this.store.get<any>(player);
-        if (plrStore == null) 
+        let plrStore = await this.store.get<any>(name) || null;
+        
+        if (plrStore === null) 
         {
-          this.store.set<any>(player, {wins:1, flagWins:0});
-          this.omegga.broadcast(`<size="28">${player} has hit the finish button! This is their first win!</>`);
-        } else 
+          this.store.set<any>(name, {wins:0, flagWins:0});
+          plrStore = await this.store.get<any>(name)
+        }
+
+        if (player) 
         {
+          string1 = `<size="28">${name} has hit the finish button!`;
           plrStore.wins += 1;
           plrStore.flagWins += 1;
-          this.omegga.broadcast(`<size="28">${player} has hit the finish button! ${plrStore.wins} wins, ${plrStore.flagWins} End wins </>`);
-          this.store.set<any>(player, plrStore);
-        }   
-      } else if (!lastManStand && alivePlayers.length == 1 && aliveNumber == 1)
-      {
-        if (minigamePlayers >= countWinsNum) 
-        {
-          let plrStore = await this.store.get(alivePlayers[0].name);
-          if (plrStore == null) 
-          {
-            this.store.set(alivePlayers[0].name, {wins:1, flagWins:0});
-            this.omegga.broadcast(`<size="28">${alivePlayers[0].name} is the last alive! This is their first win!</>`);
-          } else 
-          {
-            plrStore.wins += 1;
-            this.omegga.broadcast(`<size="28">${alivePlayers[0].name} is the last alive! ${plrStore.wins} wins</>`);
-            this.store.set(alivePlayers[0].name, plrStore);
-          } 
+          this.store.set<any>(name, plrStore);
         } else 
         {
-          this.omegga.broadcast(`<size="12">At least ${countWinsNum} players required to count wins</>`);
+          string1 = `<size="28">${name} is the last alive!`;
+          plrStore.wins += 1;
+          this.store.set<any>(name, plrStore);
         }
-      } else 
-      {
-        if (minigamePlayers < countWinsNum) 
-        {
-          this.omegga.broadcast(`<size="12">At least ${countWinsNum} players required to count wins</>`);
-        } 
-      }
 
-      if (alivePlayers.length == 1) this.omegga.nextRoundMinigame(0);
-      this.omegga.loadEnvironmentData({data:{groups:{Water:{waterHeight:waterStartHeight}}}});
-      tick = 0;
-      setTimeout(async () => { await Begin(); }, roundEndWait);
+        if (plrStore.wins === 0) 
+        {
+          string2 = `This is their first win!</>`;
+        } else 
+        {
+          (plrStore.flagWins === 0) 
+          ? string2 = `${plrStore.wins} wins</>`
+          : string2 = `${plrStore.wins} wins, ${plrStore.flagWins} Button wins </>`;
+        }
+      }
+      this.omegga.broadcast(string1 + " " + string2);
     }
 
 
-   // gets amount of players in minigame, and lists all alive ones
+
+    // gets amount of players in minigame, and lists all alive ones
     const GetAlivePlayers = async ()  => //writes into alivePlayers
     {
-      let p_s = [];
+      let p_s: OmeggaPlayer[] = [];
       let ming = await this.omegga.getMinigames();
       if (ming && ming.length > 1) 
       {
-        ming = ming.filter(m => m.name !== 'GLOBAL')
+        ming = ming.filter(m => m.name !== 'GLOBAL');
         let mingplr = ming[0].members;
         minigamePlayers = ming[0].members.length;
         let fullplrList:IPlayerPositions = await this.omegga.getAllPlayerPositions();
         for (let p of fullplrList) 
         {
-          if (p != undefined && mingplr.find(e => e.name == p.player.name) && !p.isDead) p_s.push(p.player);
+          if (mingplr.find(e => e.name === p.player.name) && !p.isDead) p_s.push(p.player);
         }
         alivePlayers = p_s;
+      } else 
+      {
+        this.omegga.broadcast('No running minigame or getMinigame failed!');
+        console.warn('No running minigame or getMinigame failed!');
       }
     }
     // gets amount of players in minigame, if only one then disable one left win condition
@@ -240,8 +250,13 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
         ming = ming.filter(m => m.name !== 'GLOBAL')
         let mingplr = ming[0].members;
         (mingplr.length < 2) ? aliveNumber = 0 : aliveNumber = 1;
+      } else 
+      {
+        this.omegga.broadcast('No running minigame or getMinigame failed!');
+        console.warn('No running minigame or getMinigame failed!');
       }
     }
+
     // just the environment for the start of a round
     const LoadStartEnv = () => 
     {

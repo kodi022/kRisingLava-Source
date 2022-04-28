@@ -31,5 +31,7 @@ This plugin automates Water Height, Sky Color, Fog Color, Sunlight Color, Time o
 
 Any other variable is free to edit.
 ## Possible bugs/issues
+     - may stop working after some number of inactive hours, solution not found
      - Commands may not actually help
      - Could bug with multiple minigames
+     - Multiclienting will lead to problems

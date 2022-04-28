@@ -8,19 +8,19 @@
     {
         "description": "Seconds to wait after round end",
         "type": "number",
-        "default": 8
+        "default": 7
     },
     "Water-Speed-Scale": 
     {
-        "description": "Rate at which rater rises",
+        "description": "Rate at which rater rises. Effects both options of exponential water. ex. 0.8",
         "type": "number",
-        "default": 0.8
+        "default": 1
     },
     "Water-Start-Height": 
     {
-        "description": "Enable if you use Minigame's last man standing option",
+        "description": "Enable if you use Minigame's last man standing option. 2 = 2x micro",
         "type": "number",
-        "default": 60
+        "default": 80
     },
     "Exponential-Water": 
     {
