@@ -23,6 +23,8 @@ Commands should NOT BE NECESSARY for the gamemode to function but there are two,
    
 (reset) : resets the environment to gamemode's defaults
 
+(clear) : deletes all saved player data (wins, flagwins)
+
 /lavasetwins (name) (number)
      will set a given players wins to a given number (probably doesnt work)
 
@@ -35,3 +37,4 @@ Any other variable is free to edit.
      - Commands may not actually help
      - Could bug with multiple minigames
      - Multiclienting will lead to problems
+     - Button can be clicked by people not in minigame

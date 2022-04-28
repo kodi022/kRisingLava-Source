@@ -39,10 +39,16 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
             running = false;
             break;
           case 'reset':
-            LoadStartEnv();
+            tick = 0;
+            running = false;
+            await Begin();
             break;
+          case 'clear':
+            await this.store.wipe();
+            this.omegga.broadcast('Cleared saved wins');
           default:
-            this.omegga.whisper(name, 'write <code>/lava start</> or <code>/lava stop</> or <code>/lava reset</>');
+            this.omegga.whisper(name, 'write <code>/lava (option)</>');
+            this.omegga.whisper(name, 'options are: start, stop, reset, clear</>');
             break;
         }
       } else 
@@ -80,7 +86,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
     const Begin = async () =>
     {
       let ming = await this.omegga.getMinigames();
-      if (ming && ming.length > 1) // getMinigames() is very hit and miss, supposed to return mini and globalmini
+      if (ming && ming.length > 1) // getMinigames() is very hit and miss, supposed to return the mini and GLOBAL
       {
         ming = ming.filter(m => m.name !== 'GLOBAL')
         if (debug) console.info('Beginning');
@@ -94,8 +100,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
         await RisingLoop();
       } else 
       {
-        this.omegga.broadcast('No running minigame or getMinigame failed!');
-        console.warn('No running minigame or getMinigame failed!');
+        if (debug) console.warn('No running minigame or getMinigame failed!');
         return;
       }
     }
@@ -237,8 +242,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
         alivePlayers = p_s;
       } else 
       {
-        this.omegga.broadcast('No running minigame or getMinigame failed!');
-        console.warn('No running minigame or getMinigame failed!');
+        if (debug) console.warn('No running minigame or getMinigame failed!');
       }
     }
     // gets amount of players in minigame, if only one then disable one left win condition
@@ -252,8 +256,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
         (mingplr.length < 2) ? aliveNumber = 0 : aliveNumber = 1;
       } else 
       {
-        this.omegga.broadcast('No running minigame or getMinigame failed!');
-        console.warn('No running minigame or getMinigame failed!');
+        if (debug) console.warn('No running minigame or getMinigame failed!');
       }
     }
 
