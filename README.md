@@ -33,7 +33,3 @@ Any other variable is free to edit.
 ## Possible bugs/issues
      - Commands may not actually help
      - Could bug with multiple minigames
-     - If cpu is too slow it could miss minigame data updates (just theory)
-     - The water can definitely get too fast 2+ minutes in, but you shouldnt usually be alive at that point anyway
-
-
