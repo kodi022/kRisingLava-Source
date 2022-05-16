@@ -74,13 +74,17 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
       }
     })
 
-    let ming = await this.omegga.getMinigames();
-    if (ming.length < 2) 
+    async function search_mini() 
     {
-      console.warn("No minigame was found, start minigame then restart plugin or try /lava start");
-      this.omegga.broadcast("No minigame was found, start minigame then restart plugin or try /lava start");
-      return { registeredCommands: ['lava', 'lavasetwins'] };
+      let ming = await this.omegga.getMinigames();
+      if (ming.length < 2) 
+      {
+        console.warn("No minigame was found, searching again in 20 seconds");
+        this.omegga.broadcast("No minigame was found, searching again in 20 seconds");
+        setTimeout(async () => {await search_mini(); return;}, 20000)
+      }
     }
+    await search_mini();
 
     // ran at start of each round, then loops RisingLoop() until end conditions are met, and returns here
     const Begin = async () =>
