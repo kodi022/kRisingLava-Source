@@ -79,12 +79,11 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
       let ming = await this.omegga.getMinigames();
       if (ming.length < 2) 
       {
-        console.warn("No minigame was found, searching again in 20 seconds");
-        this.omegga.broadcast("No minigame was found, searching again in 20 seconds");
-        setTimeout(async () => {await search_mini(); return;}, 20000)
+        console.log("No minigame was found");
+        this.omegga.broadcast("No minigame was found");
       }
     }
-    await search_mini();
+    setTimeout(async () => {await search_mini(); return;}, 10000)
 
     // ran at start of each round, then loops RisingLoop() until end conditions are met, and returns here
     const Begin = async () =>
@@ -165,10 +164,10 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
       }, 100);
     };
 
-    // this.omegga.on('join', async () => // sanity function
-    // { 
-    //   running = true;
-    // });
+    this.omegga.on('join', async () => // sanity function
+    { 
+      running = true;
+    });
     this.omegga.on('interact', async (interact:BrickInteraction) => 
     {
       if (running) await EndCheck(interact.player.name);
