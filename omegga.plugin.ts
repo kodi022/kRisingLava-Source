@@ -74,7 +74,7 @@ export default class kRisingLava implements OmeggaPlugin<Config, Storage>
       }
     })
 
-    async function search_mini() 
+    const search_mini = async () => 
     {
       let ming = await this.omegga.getMinigames();
       if (ming.length < 2) 
